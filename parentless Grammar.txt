@@ -4,7 +4,7 @@ Terminales:
 [start], [(a..z|0..9)+], [assign], [:], [with], [,], [to], [end], [do],
 [+], [-], [*], [/], [draw], [bool], [int], [str], [float], [if], [while], [true], [false],
 [>], [<], [=], [&], [|], [!], [nothing], [\n], [.], ['], ["], [circle], [square], [triangle],
-[in], [return], [black], [white], [set], [color], [( -~)*]
+[in], [return], [black], [white], [set], [color], [( -~)*], [0..9]+, [0..9]+.([.].[0..9]+ | ε)
 
 
 No-Terminales:
