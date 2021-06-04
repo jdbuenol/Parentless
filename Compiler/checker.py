@@ -387,3 +387,87 @@ class checker:
                     self.state = "bool_op"
                     continue
                 return warning("[!] or [false] or [true] or bool", current_token.content)
+            
+            if self.state == "draw_op":
+                if current_token.terminal == "Symbol":
+                    if not self.symbols.contains(current_token.terminal):
+                        return not_defined(current_token.terminal)
+                    self.state = "draw_coords"
+                    continue
+                if current_token.terminal in forms:
+                    self.state = "draw_coords"
+                    continue
+                if current_token.terminal == "one word str":
+                    self.state = "draw_coords"
+                    continue
+                if current_token.terminal == "open str":
+                    self.state = "draw multi words"
+                    continue
+                if "num" in current_token.terminal:
+                    self.state = "draw_coords"
+                    continue
+                if current_token.terminal == "true" or current_token.terminal == "false":
+                    self.state = "draw_coords"
+                    continue
+                return warning("symbol or form or string or int or num or [true] or [false]", current_token.content)
+            
+            if self.state == "draw multi words":
+                if current_token.terminal == "close str":
+                    self.state = "draw_coords"
+                    continue
+                if "'" in current_token.content or '"' in current_token.content:
+                    return wrong_str()
+                continue
+
+            if self.state == "draw_coords":
+                if current_token.terminal == "in":
+                    self.state = "coord_x"
+                    continue
+                return warning("in", current_token.content)
+            
+            if self.state == "coord_x":
+                if current_token.terminal == "num":
+                    current_token = self.stream.pop()
+                    if current_token.terminal == ',':
+                        self.state = "coord_y"
+                        continue
+                    return warning(",", current_token.content)
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if not self.symbols.get(current_token.content):
+                        return wrong_type("int", self.symbols.get(current_token.content))
+                    current_token = self.stream.pop()
+                    if current_token.terminal == ",":
+                        self.state = "coord_y"
+                        continue
+                    return warning(",", current_token.content)
+                return warning("int", current_token.content)
+            
+            if self.state == "coord_y":
+                if current_token.terminal == "num":
+                    current_token = self.stream.pop()
+                    if current_token.terminal == '\\n':
+                        self.state = "func_body"
+                        continue
+                    return warning("\\n", current_token.content)
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if not self.symbols.get(current_token.content):
+                        return wrong_type("int", self.symbols.get(current_token.content))
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "\\n":
+                        self.state = "func_body"
+                        continue
+                    return warning("\\n", current_token.content)
+                return warning("int", current_token.content)
+            
+            if self.state == "set_color":
+                if current_token.terminal == "white" or current_token.terminal == "black":
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "\\n":
+                        self.state = "func_body"
+                        continue
+                    return warning("\\n", current_token.content)
+                return warning("[white] or [black]", current_token.content)
