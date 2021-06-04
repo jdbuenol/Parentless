@@ -8,10 +8,10 @@ class token:
         self.content = s
         if s in keywords:
             self.terminal = s
-        elif s.isnumeric() and '.' in s:
-            self.terminal = "float"
+        elif '.' in s and (s[0:s.find('.')] + s[s.find('.') + 1:]).isnumeric():
+            self.terminal = "float_num"
         elif s.isnumeric():
-            self.terminal = "int"
+            self.terminal = "num"
         elif s.isalnum():
             self.terminal = "symbol"
         elif s == '\n':
@@ -24,8 +24,7 @@ class token:
         elif s[-1] == '"' or s[-1] == "'":
             self.terminal = "close str"
         else:
-            self.terminal = "str"
-            print()
+            self.terminal = "other str"
     
     def __str__(self) -> str:
         return("content: " + self.content + "\nterminal: " + self.terminal + "\n")

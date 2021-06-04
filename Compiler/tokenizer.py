@@ -13,5 +13,9 @@ class tokenizer:
             for y in current_line:
                 if len(y) > 0:
                     self.tokens_list.append(token(y))
-        for x in self.tokens_list:
-            print(x)
+    
+    def is_empty(self) -> bool:
+        return len(self.tokens_list) == 0
+    
+    def pop(self) -> token:
+        return self.tokens_list.pop(0)

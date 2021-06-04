@@ -1,8 +1,7 @@
 from io import FileIO
 from sys import argv
-import token
-from token import token
 from tokenizer import tokenizer
+from checker import checker
 
 if __name__ == '__main__':
     if len(argv) != 2:
@@ -15,3 +14,8 @@ if __name__ == '__main__':
     
     script : FileIO = open(path)
     token_stream : tokenizer = tokenizer(script)
+    checker : checker = checker(token_stream)
+    if(checker.parse()):
+        pass
+    else:
+        print()

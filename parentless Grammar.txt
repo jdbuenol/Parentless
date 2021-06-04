@@ -1,7 +1,7 @@
 PARENTLESS GRAMMAR:
 
 Terminales:
-[start], [(a..z|0..9)+], [assign], [:], [with], [,], [to], [end], [do],
+[start], [(a..z|0..9)+], [assign], [with], [,], [to], [end], [do],
 [+], [-], [*], [/], [draw], [bool], [int], [str], [float], [if], [while], [true], [false],
 [>], [<], [=], [&], [|], [!], [nothing], [\n], [.], ['], ["], [circle], [square], [triangle],
 [in], [return], [black], [white], [set], [color], [( -~)*], [0..9]+, [0..9]+.([.].[0..9]+ | ε)
@@ -18,7 +18,7 @@ Reglas de producción:
 {E} => ({function})*,
 {function} => {funcDeclaration}.{funcBody}.{funcEnd},
 
-{funcDeclaration} => [start].{id}.[with].{funcArgs}.[:].[\n],
+{funcDeclaration} => [start].{id}.[with].{funcArgs}.[\n],
 {funcArgs} => ({type}.{id}.[,])*.{type}.{id} | [nothing],
 {funcEnd} => [end].{id}.[return].({id} | [nothing]).[\n],
 
@@ -40,9 +40,9 @@ Reglas de producción:
 
 {funcCall} => [do].{id}.[with].(({id}.[,])*.{id}).[\n],
 
-{if} => [if].{boolOP}.[:].[\n].{funcBody}.[\n].[end].[if].[\n],
+{if} => [if].{boolOP}.[\n].{funcBody}.[\n].[end].[if].[\n],
 
-{while} => [while].{boolOP}.[:].[\n].{funcBody}.[\n].[end].[while].[\n],
+{while} => [while].{boolOP}.[\n].{funcBody}.[\n].[end].[while].[\n],
 
 {id} => [(a..z|0..9)+],
 {type} => [bool] | [int] | [str] | [float],
@@ -50,11 +50,12 @@ Reglas de producción:
 {floatNum} => [(0..9)+].[.].[(0..9)+]
 {aritOP} => [+] | [-] | [*] | [/],
 {compOP} => [>] | [<] | [=],
-{boolOP} => [&] | [|] | [=],
+{boolOP} => [&] | [|],
 {boolValue} => [true] | [false],
 {str} => (['] | ["]).[( ..~)*].(['] | ["]),
 {form} => [square] | [triangle] | [circle],
 {drawable} => {id} | {form} | {str} | {num} | {boolValue} | {floatNum},
+
 
 Inicio:
 {E}
