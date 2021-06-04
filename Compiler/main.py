@@ -15,7 +15,10 @@ if __name__ == '__main__':
     script : FileIO = open(path)
     token_stream : tokenizer = tokenizer(script)
     checker : checker = checker(token_stream)
-    if(checker.parse()):
-        print("SUCCESFULLY PARSED")
-    else:
-        print()
+    try:
+        if(checker.parse()):
+            print("SUCCESFULLY PARSED")
+        else:
+            print()
+    except IndexError:
+        print("EOF reached while parsing")

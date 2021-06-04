@@ -1,8 +1,0 @@
-start test with bool simon
-    draw simon in 0 , 0
-end test
-
-start main with nothing
-    assign bool true to julian
-    do test with julian
-end main

@@ -1,0 +1,39 @@
+start fibonacci with int a
+    if a < 1
+        draw "error" in 0 , 0
+    end if
+    if ! a < 1
+        if a = 1
+            draw 1 in 0 , 0
+        end if
+        if ! a = 1
+            if a = 2
+                draw 1 in 0 , 0
+            end if
+            if ! a = 2
+                assign int 1 to b
+                assign int 1 to c
+                assign int a - 2 to d
+                assign int 1 to e
+                assign bool false to r
+                while d > 0
+                    update bool false to r
+                    update int b + c to e
+                    if b > c
+                        update bool true to r
+                        update int e to c
+                    end if
+                    if ! r
+                        update int e to b
+                    end if
+                    update int d - 1 to d
+                end while
+                draw e in 0 , 0
+            end if
+        end if
+    end if
+end fibonacci
+
+start main with nothing
+    do fibonacci with 5
+end main

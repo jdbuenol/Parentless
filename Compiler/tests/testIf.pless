@@ -3,7 +3,3 @@ start main with nothing
     if adrian
         draw "gay" in 0 , 0
     end if
-    if ! adrian
-        draw "no gay" in 0 , 0
-    end if
-end main
