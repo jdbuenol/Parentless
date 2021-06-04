@@ -61,6 +61,8 @@ class checker:
         while(not self.stream.is_empty()):
 
             print(self.state)
+            print(self.stack)
+            print()
             current_token : token = self.stream.pop()
 
             if self.state == "func_declaration":
@@ -201,9 +203,11 @@ class checker:
                     continue
                 if current_token.terminal == "if":
                     self.state = "if"
+                    self.stack.append("if")
                     continue
                 if current_token.terminal == "while":
                     self.state = "while"
+                    self.stack.append("while")
                     continue
                 if current_token.terminal == "end":
                     self.state = "end"
@@ -606,7 +610,6 @@ class checker:
                 return warning("[,] or [\\n]", current_token.content)
             
             if self.state == "if":
-                self.stack.append("if")
                 if current_token.terminal == "!":
                     continue
                 if current_token.terminal == "symbol":
@@ -694,7 +697,6 @@ class checker:
                 return warning("bool or [false] or [true]", current_token.content)
             
             if self.state == "while":
-                self.stack.append("while")
                 if current_token.terminal == "!":
                     continue
                 if current_token.terminal == "symbol":
