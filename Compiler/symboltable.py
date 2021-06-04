@@ -4,11 +4,14 @@ class symbol_table:
     def __init__(self) -> None:
         pass
 
-    def append(self, s : str, type : str) -> None:
-        self.symbols[s] = str
+    def append(self, s : str, type_name : str) -> None:
+        self.symbols[s] = type_name
     
     def contains(self, s : str) -> bool:
         return s in self.symbols
     
     def get(self, s : str) -> str:
         return self.symbols[s]
+    
+    def __str__(self) -> str:
+        return str(self.symbols)

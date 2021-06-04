@@ -16,6 +16,6 @@ if __name__ == '__main__':
     token_stream : tokenizer = tokenizer(script)
     checker : checker = checker(token_stream)
     if(checker.parse()):
-        pass
+        print("SUCCESFULLY PARSED")
     else:
         print()

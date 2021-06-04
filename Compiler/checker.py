@@ -1,3 +1,4 @@
+from io import SEEK_CUR
 from os import terminal_size
 from token import token
 from tokenizer import tokenizer
@@ -7,8 +8,8 @@ def warning(expected : str, found : str) -> bool:
     print("["+expected+"] expected, but [" + found + "] was found.")
     return False
 
-def already_defined(symbol : str, as : str) -> bool:
-    print("The symbol " + symbol + " is already defined as a " + as + ".")
+def already_defined(symbol : str, defined : str) -> bool:
+    print("The symbol " + symbol + " is already defined as a " + defined + ".")
     return False
 
 def wrong_type(expected : str, found : str) -> bool:
@@ -23,6 +24,18 @@ def wrong_str(symbol : str) -> bool:
     print("Wrong string close.")
     return False
 
+def wrong_number_params(func_name : str, expected : int) -> bool:
+    print("Wrong number of parameters given for the function: " + func_name + ". " + str(expected) + " expected(s).")
+    return False
+
+def wrong_param_type(expected : str, found : str) -> bool:
+    print("Wrong parameter type: " + expected + " was expected but " + found + " was found.")
+    return False
+
+def wrong_end(expected : str, found : str) -> bool:
+    print("Wrong end: end " + expected + " expected but end " + found + " was found.")
+    return False
+
 arit_op : list = ['+', '-', '*', '/']
 comp_op : list = ['>', '<', '=']
 forms : list = ['triangle', 'rectangle', 'circle']
@@ -30,9 +43,13 @@ forms : list = ['triangle', 'rectangle', 'circle']
 class checker:
 
     stack : list = []
+    params_dict : dict = {}
+    current_func : str = ""
     stream : tokenizer
     symbols : symbol_table
     state : str
+    func_called : str
+    current_param : int = 0
 
     def __init__(self, tokens_stream : tokenizer) -> None:
         self.stream = tokens_stream
@@ -40,8 +57,10 @@ class checker:
         self.state = "func_declaration"
     
     def parse(self) -> bool:
+        #start of the machine
         while(not self.stream.is_empty()):
 
+            print(self.state)
             current_token : token = self.stream.pop()
 
             if self.state == "func_declaration":
@@ -57,6 +76,8 @@ class checker:
                     if self.symbols.contains(current_token.content):
                         return already_defined(current_token.content, self.symbols.get(current_token.content))
                     self.symbols.append(current_token.content, "function")
+                    self.current_func = current_token.content
+                    self.params_dict[self.current_func] = []
                     self.stack.append(current_token.content)
                     current_token = self.stream.pop()
                     if current_token.terminal == 'with':
@@ -69,12 +90,43 @@ class checker:
                 if current_token.terminal == "nothing":
                     self.state = "func_args3"
                     continue
-                if current_token.terminal == "bool" or current_token.terminal == "int" or current_token.terminal == "float" or current_token.terminal == "str":
+                if current_token.terminal == "bool":
                     current_token = self.stream.pop()
                     if current_token.terminal == "symbol":
                         if self.symbols.contains(current_token.content):
                             return already_defined(current_token.content, self.symbols.get(current_token.content))
-                        self.symbols.append(current_token.content, "parameter")
+                        self.symbols.append(current_token.content, "bool")
+                        self.params_dict[self.current_func].append("bool")
+                        self.state = "func_args2"
+                        continue
+                    return warning("symbol", current_token.content)
+                if current_token.terminal == "int":
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if self.symbols.contains(current_token.content):
+                            return already_defined(current_token.content, self.symbols.get(current_token.content))
+                        self.symbols.append(current_token.content, "num")
+                        self.params_dict[self.current_func].append("num")
+                        self.state = "func_args2"
+                        continue
+                    return warning("symbol", current_token.content)
+                if current_token.terminal == "float":
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if self.symbols.contains(current_token.content):
+                            return already_defined(current_token.content, self.symbols.get(current_token.content))
+                        self.symbols.append(current_token.content, "float_num")
+                        self.params_dict[self.current_func].append("float_num")
+                        self.state = "func_args2"
+                        continue
+                    return warning("symbol", current_token.content)
+                if current_token.terminal == "str":
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if self.symbols.contains(current_token.content):
+                            return already_defined(current_token.content, self.symbols.get(current_token.content))
+                        self.symbols.append(current_token.content, "str")
+                        self.params_dict[self.current_func].append("str")
                         self.state = "func_args2"
                         continue
                     return warning("symbol", current_token.content)
@@ -83,20 +135,48 @@ class checker:
             if self.state == "func_args2":
                 if current_token.terminal == ',':
                     current_token = self.stream.pop()
-                    if current_token.terminal == "bool" or current_token.terminal == "int" or current_token.terminal == "float" or current_token.terminal == "str":
+                    if current_token.terminal == "bool":
                         current_token = self.stream.pop()
                         if current_token.terminal == "symbol":
                             if self.symbols.contains(current_token.content):
                                 return already_defined(current_token.content, self.symbols.get(current_token.content))
-                            self.symbols.append(current_token.content, "parameter")
+                            self.symbols.append(current_token.content, "bool")
+                            self.params_dict[self.current_func].append("bool")
+                            continue
+                        return warning("symbol", current_token.content)
+                    if current_token.terminal == "int":
+                        current_token = self.stream.pop()
+                        if current_token.terminal == "symbol":
+                            if self.symbols.contains(current_token.content):
+                                return already_defined(current_token.content, self.symbols.get(current_token.content))
+                            self.symbols.append(current_token.content, "num")
+                            self.params_dict[self.current_func].append("num")
+                            continue
+                        return warning("symbol", current_token.content)
+                    if current_token.terminal == "float":
+                        current_token = self.stream.pop()
+                        if current_token.terminal == "symbol":
+                            if self.symbols.contains(current_token.content):
+                                return already_defined(current_token.content, self.symbols.get(current_token.content))
+                            self.symbols.append(current_token.content, "float_num")
+                            self.params_dict[self.current_func].append("float_num")
+                            continue
+                        return warning("symbol", current_token.content)
+                    if current_token.terminal == "str":
+                        current_token = self.stream.pop()
+                        if current_token.terminal == "symbol":
+                            if self.symbols.contains(current_token.content):
+                                return already_defined(current_token.content, self.symbols.get(current_token.content))
+                            self.symbols.append(current_token.content, "str")
+                            self.params_dict[self.current_func].append("str")
                             continue
                         return warning("symbol", current_token.content)
                     return warning("[bool] or [int] or [float] or [str]", current_token.content)
                 if current_token.terminal == '\\n':
                     self.state = "func_body"
                     continue
-                return warning("[\\n] or [,]", current_token.content)
-            
+                return warning("[,] or [\\n]", current_token.content)
+
             if self.state == "func_args3":
                 if current_token.terminal == '\\n':
                     self.state = "func_body"
@@ -106,9 +186,6 @@ class checker:
             if self.state == "func_body":
                 if current_token.terminal == 'assign':
                     self.state = "assign_op"
-                    continue
-                if current_token.terminal == "end":
-                    self.state = "func_end"
                     continue
                 if current_token.terminal == "draw":
                     self.state = "draw_op"
@@ -127,6 +204,11 @@ class checker:
                     continue
                 if current_token.terminal == "while":
                     self.state = "while"
+                    continue
+                if current_token.terminal == "end":
+                    self.state = "end"
+                    continue
+                if current_token.terminal == "\\n":
                     continue
                 return warning("[assign] or [end] or [draw] or [set] or [do] or [if] or [while]", current_token.content)
 
@@ -313,6 +395,7 @@ class checker:
             
             if self.state == "num_op2":
                 if current_token.terminal in arit_op:
+                    current_token = self.stream.pop()
                     if current_token.terminal == "symbol":
                         if not self.symbols.contains(current_token.content):
                             return not_defined(current_token.content)
@@ -323,6 +406,7 @@ class checker:
                         continue
                     return warning("int or float", current_token.content)
                 if current_token.terminal in comp_op:
+                    current_token = self.stream.pop()
                     if current_token.terminal == "symbol":
                         if not self.symbols.contains(current_token.content):
                             return not_defined(current_token.content)
@@ -334,10 +418,11 @@ class checker:
                         self.state = "num_op3"
                         continue
                     return warning("int or float", current_token.content)
-                return warning("[+] or [-] or [*] or [/] or [>] or [<] or [&]", current_token.content)
+                return warning("[+] or [-] or [*] or [/] or [>] or [<] or [=]", current_token.content)
             
             if self.state == "num_op3":
                 if current_token.terminal in arit_op:
+                    current_token = self.stream.pop()
                     if current_token.terminal == "symbol":
                         if not self.symbols.contains(current_token.content):
                             return not_defined(current_token.content)
@@ -353,8 +438,11 @@ class checker:
                         if self.symbols.contains(current_token.content):
                             return already_defined(current_token.content, self.symbols.get(current_token.content))
                         self.symbols.append(current_token.content, "bool")
-                        self.state = "func_body"
-                        continue
+                        current_token = self.stream.pop()
+                        if current_token.content == '\\n':
+                            self.state = "func_body"
+                            continue
+                        return warning("\\n", current_token.content)
                     return warning("symbol", current_token.content)
                 return warning("[+] or [-] or [*] or [/] or [to]", current_token.content)
             
@@ -389,9 +477,9 @@ class checker:
                 return warning("[!] or [false] or [true] or bool", current_token.content)
             
             if self.state == "draw_op":
-                if current_token.terminal == "Symbol":
-                    if not self.symbols.contains(current_token.terminal):
-                        return not_defined(current_token.terminal)
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
                     self.state = "draw_coords"
                     continue
                 if current_token.terminal in forms:
@@ -471,3 +559,268 @@ class checker:
                         continue
                     return warning("\\n", current_token.content)
                 return warning("[white] or [black]", current_token.content)
+            
+            if self.state == "func_call":
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if not self.symbols.get(current_token.content) == "function":
+                        return wrong_type("function", self.symbols.get(current_token.content))
+                    self.func_called = current_token.content
+                    self.current_param = 0
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "with":
+                        self.state = "call_args"
+                        continue
+                    return warning("with", current_token.content)
+                return warning("function name", current_token.content)
+            
+            if self.state == "call_args":
+                if current_token.terminal == "nothing":
+                    if self.current_param != len(self.params_dict[self.func_called]):
+                        return wrong_number_params(self.func_called, len(self.params_dict[self.func_called]))
+                    current_token = self.stream.pop()
+                    if current_token == "\\n":
+                        self.state = "func_body"
+                        continue
+                    return warning("\\n", current_token.content)
+                if current_token.terminal == "symbol":
+                    if self.current_param >= len(self.params_dict[self.func_called]):
+                        return wrong_number_params(self.func_called, len(self.params_dict[self.func_called]))
+                    if self.symbols.get(current_token.content) != self.params_dict[self.func_called][self.current_param]:
+                        return wrong_param_type(self.params_dict[self.func_called][self.current_param], self.symbols.get(current_token.content))
+                    self.current_param += 1
+                    self.state = "end_call"
+                    continue
+                return warning("symbol or [nothing]", current_token.content)
+            
+            if self.state == "end_call":
+                if current_token.terminal == "\\n":
+                    if self.current_param != len(self.params_dict[self.func_called]):
+                        return wrong_number_params(self.func_called, len(self.params_dict[self.func_called]))
+                    self.state = "func_body"
+                    continue
+                if current_token.terminal == ",":
+                    self.state = "call_args"
+                    continue
+                return warning("[,] or [\\n]", current_token.content)
+            
+            if self.state == "if":
+                self.stack.append("if")
+                if current_token.terminal == "!":
+                    continue
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if "num" in self.symbols.get(current_token.content):
+                        self.state = "num_if"
+                        continue
+                    if self.symbols.get(current_token.content) == "bool":
+                        self.state = "bool_if"
+                        continue
+                    return wrong_type("bool or int or float", self.symbols.get(current_token.content))
+                if "num" in current_token.terminal:
+                    self.state = "num_if"
+                    continue
+                if current_token.terminal == "bool":
+                    self.state = "bool_if"
+                    continue
+                return warning("[!] or int or float or bool", current_token.content)
+            
+            if self.state == "num_if":
+                if current_token.terminal in arit_op:
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if not self.symbols.contains(current_token.content):
+                            return not_defined(current_token.content)
+                        if "num" in self.symbols.get(current_token.content):
+                            continue
+                        return wrong_type("int or float", self.symbols.get(current_token.content))
+                    if "num" in current_token.terminal:
+                        continue
+                    return warning("int or float", current_token.content)
+                if current_token.terminal in comp_op:
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if not self.symbols.contains(current_token.content):
+                            return not_defined(current_token.content)
+                        if "num" in self.symbols.get(current_token.content):
+                            self.state = "num_if2"
+                            continue
+                        return wrong_type("int or float", self.symbols.get(current_token.content))
+                    if "num" in current_token.terminal:
+                        self.state = "num_if2"
+                        continue
+                    return warning("int or float", current_token.content)
+                return warning("[+] or [-] or [*] or [/] or [>] or [<] or [=]", current_token.content)
+            
+            if self.state == "num_if2":
+                if current_token.terminal in arit_op:
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if not self.symbols.contains(current_token.content):
+                            return not_defined(current_token.content)
+                        if "num" in self.symbols.get(current_token.content):
+                            continue
+                        return wrong_type("int or float", self.symbols.get(current_token.content))
+                    if "num" in current_token.terminal:
+                        continue
+                    return warning("int or float", current_token.content)
+                if current_token.terminal == '\\n':
+                    self.state = "func_body"
+                    continue
+                return warning("[\\n] or [+] or [-] or [*] or [/]", current_token.content)
+            
+            if self.state == "bool_if":
+                if current_token.terminal == "\\n":
+                    self.state = "func_body"
+                    continue
+                if current_token.terminal == "&" or current_token.terminal == "|":
+                    self.state = "bool_if2"
+                    continue
+                return warning("[\\n] or [&] or [|]", current_token.content)
+            
+            if self.state == "bool_if2":
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if self.symbols.get(current_token.content) != "bool":
+                        return wrong_type('bool', self.symbols.get(current_token.content))
+                    self.state = "bool_if"
+                    continue
+                if current_token.terminal == "false" or current_token.terminal == "true":
+                    self.state = "bool_if"
+                    continue
+                return warning("bool or [false] or [true]", current_token.content)
+            
+            if self.state == "while":
+                self.stack.append("while")
+                if current_token.terminal == "!":
+                    continue
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if "num" in self.symbols.get(current_token.content):
+                        self.state = "num_while"
+                        continue
+                    if self.symbols.get(current_token.content) == "bool":
+                        self.state = "bool_while"
+                        continue
+                    return wrong_type("bool or int or float", self.symbols.get(current_token.content))
+                if "num" in current_token.terminal:
+                    self.state = "num_while"
+                    continue
+                if current_token.terminal == "bool":
+                    self.state = "bool_while"
+                    continue
+                return warning("[!] or int or float or bool", current_token.content)
+            
+            if self.state == "num_while":
+                if current_token.terminal in arit_op:
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if not self.symbols.contains(current_token.content):
+                            return not_defined(current_token.content)
+                        if "num" in self.symbols.get(current_token.content):
+                            continue
+                        return wrong_type("int or float", self.symbols.get(current_token.content))
+                    if "num" in current_token.terminal:
+                        continue
+                    return warning("int or float", current_token.content)
+                if current_token.terminal in comp_op:
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "symbol":
+                        if not self.symbols.contains(current_token.content):
+                            return not_defined(current_token.content)
+                        if "num" in self.symbols.get(current_token.content):
+                            self.state = "num_while2"
+                            continue
+                        return wrong_type("int or float", self.symbols.get(current_token.content))
+                    if "num" in current_token.terminal:
+                        self.state = "num_while2"
+                        continue
+                    return warning("int or float", current_token.content)
+                return warning("[+] or [-] or [*] or [/] or [>] or [<] or [=]", current_token.content)
+            
+            if self.state == "num_while2":
+                if current_token.terminal in arit_op:
+                    if current_token.terminal == "symbol":
+                        if not self.symbols.contains(current_token.content):
+                            return not_defined(current_token.content)
+                        if "num" in self.symbols.get(current_token.content):
+                            continue
+                        return wrong_type("int or float", self.symbols.get(current_token.content))
+                    if "num" in current_token.terminal:
+                        continue
+                    return warning("int or float", current_token.content)
+                if current_token.terminal == '\\n':
+                    self.state = "func_body"
+                    continue
+                return warning("[\\n] or [+] or [-] or [*] or [/]", current_token.content)
+            
+            if self.state == "bool_while":
+                if current_token.terminal == "\\n":
+                    self.state = "func_body"
+                    continue
+                if current_token.terminal == "&" or current_token.terminal == "|":
+                    self.state = "bool_while2"
+                    continue
+                return warning("[\\n] or [&] or [|]", current_token.content)
+            
+            if self.state == "bool_while2":
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if self.symbols.get(current_token.content) != "bool":
+                        return wrong_type('bool', self.symbols.get(current_token.content))
+                    self.state = "bool_while"
+                    continue
+                if current_token.terminal == "false" or current_token.terminal == "true":
+                    self.state = "bool_while"
+                    continue
+                return warning("bool or [false] or [true]", current_token.content)
+            
+            if self.state == "end":
+                if current_token.terminal == "if":
+                    expected_end = self.stack.pop()
+                    if expected_end != "if":
+                        return wrong_end(expected_end, 'if')
+                    current_token = self.stream.pop()
+                    if current_token.terminal == '\\n':
+                        self.state = "func_body"
+                        continue
+                    return warning("\\n", current_token.content)
+                if current_token.terminal == "while":
+                    expected_end = self.stack.pop()
+                    if expected_end != "while":
+                        return wrong_end(expected_end, 'while')
+                    current_token = self.stream.pop()
+                    if current_token.terminal == "\\n":
+                        self.state = "func_body"
+                        continue
+                    return warning("\\n", current_token.content)
+                if current_token.terminal == "symbol":
+                    if not self.symbols.contains(current_token.content):
+                        return not_defined(current_token.content)
+                    if self.symbols.get(current_token.content) != 'function':
+                        return wrong_type('function', self.symbols.get(current_token.content))
+                    expected_end = self.stack.pop()
+                    if current_token.content != expected_end:
+                        return wrong_end(expected_end, current_token.content)
+                    self.state = "end_of_file"
+                    continue
+                return warning("[if] or [while] or function name", current_token.content)
+            
+            if self.state == "end_of_file":
+                if current_token.terminal == '\\n':
+                    self.state = "func_declaration"
+                    continue
+                return warning("[\\n] or EOF", current_token.content)
+        
+        # End of the machine
+
+        if self.state == "end_of_file" or self.state == "func_declaration":
+            if len(self.stack) == 0:
+                return True
+        print("EOF reached while parsing")
+        return False

@@ -1,0 +1,3 @@
+start main with nothing
+    draw "Hello, World!" in 0 , 0
+end main
