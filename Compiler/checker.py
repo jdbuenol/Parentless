@@ -1,4 +1,5 @@
-from io import SEEK_CUR
+#This class is the PARSER
+
 from os import terminal_size
 from token import token
 from tokenizer import tokenizer
@@ -44,6 +45,8 @@ class checker:
 
     stack : list = []
     params_dict : dict = {}
+    params_dict2 : dict = {}
+    func_vars : dict = {}
     current_func : str = ""
     stream : tokenizer
     symbols : symbol_table
@@ -60,7 +63,6 @@ class checker:
     def parse(self) -> bool:
         #start of the machine
         while(not self.stream.is_empty()):
-
             current_token : token = self.stream.pop()
 
             if self.state == "func_declaration":
@@ -79,6 +81,8 @@ class checker:
                     self.symbols.append(current_token.content, "function")
                     self.current_func = current_token.content
                     self.params_dict[self.current_func] = []
+                    self.params_dict2[self.current_func] = []
+                    self.func_vars[self.current_func] = []
                     self.stack.append(current_token.content)
                     current_token = self.stream.pop()
                     if current_token.terminal == 'with':
@@ -98,6 +102,7 @@ class checker:
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "bool")
                         self.params_dict[self.current_func].append("bool")
+                        self.params_dict2[self.current_func].append(current_token.content)
                         self.state = "func_args2"
                         continue
                     return warning("symbol", current_token.content, self.current_line)
@@ -108,6 +113,7 @@ class checker:
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "num")
                         self.params_dict[self.current_func].append("num")
+                        self.params_dict2[self.current_func].append(current_token.content)
                         self.state = "func_args2"
                         continue
                     return warning("symbol", current_token.content, self.current_line)
@@ -118,6 +124,7 @@ class checker:
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "float_num")
                         self.params_dict[self.current_func].append("float_num")
+                        self.params_dict2[self.current_func].append(current_token.content)
                         self.state = "func_args2"
                         continue
                     return warning("symbol", current_token.content, self.current_line)
@@ -128,6 +135,7 @@ class checker:
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "str")
                         self.params_dict[self.current_func].append("str")
+                        self.params_dict2[self.current_func].append(current_token.content)
                         self.state = "func_args2"
                         continue
                     return warning("symbol", current_token.content, self.current_line)
@@ -143,6 +151,7 @@ class checker:
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "bool")
                             self.params_dict[self.current_func].append("bool")
+                            self.params_dict2[self.current_func].append(current_token.content)
                             continue
                         return warning("symbol", current_token.content, self.current_line)
                     if current_token.terminal == "int":
@@ -152,6 +161,7 @@ class checker:
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "num")
                             self.params_dict[self.current_func].append("num")
+                            self.params_dict2[self.current_func].append(current_token.content)
                             continue
                         return warning("symbol", current_token.content, self.current_line)
                     if current_token.terminal == "float":
@@ -161,6 +171,7 @@ class checker:
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "float_num")
                             self.params_dict[self.current_func].append("float_num")
+                            self.params_dict2[self.current_func].append(current_token.content)
                             continue
                         return warning("symbol", current_token.content, self.current_line)
                     if current_token.terminal == "str":
@@ -170,6 +181,7 @@ class checker:
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "str")
                             self.params_dict[self.current_func].append("str")
+                            self.params_dict2[self.current_func].append(current_token.content)
                             continue
                         return warning("symbol", current_token.content, self.current_line)
                     return warning("[bool] or [int] or [float] or [str]", current_token.content, self.current_line)
@@ -267,6 +279,7 @@ class checker:
                         if self.symbols.contains(current_token.content):
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "num")
+                        self.func_vars[self.current_func].append(current_token.content)
                         current_token = self.stream.pop()
                         if current_token.terminal == "\\n":
                             self.state = "func_body"
@@ -307,6 +320,7 @@ class checker:
                         if self.symbols.contains(current_token.content):
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "float_num")
+                        self.func_vars[self.current_func].append(current_token.content)
                         current_token = self.stream.pop()
                         if current_token.terminal == "\\n":
                             self.state = "func_body"
@@ -325,6 +339,7 @@ class checker:
                             if self.symbols.contains(current_token.content):
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "str")
+                            self.func_vars[self.current_func].append(current_token.content)
                             current_token = self.stream.pop()
                             if current_token.terminal == "\\n":
                                 self.current_line += 1
@@ -332,9 +347,7 @@ class checker:
                                 continue
                             return warning("[\\n]", current_token.content, self.current_line)
                         return warning("symbol", current_token.content, self.current_line)
-                    if current_token.terminal == "+":
-                        continue
-                    return warning("[to] or [+]", current_token.content, self.current_line)
+                    return warning("[to]", current_token.content, self.current_line)
                 if current_token.terminal == "open str":
                     self.state = "multi_word_str"
                     continue
@@ -350,6 +363,7 @@ class checker:
                             if self.symbols.contains(current_token.content):
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "str")
+                            self.func_vars[self.current_func].append(current_token.content)
                             current_token = self.stream.pop()
                             if current_token.terminal == "\\n":
                                 self.current_line += 1
@@ -357,13 +371,11 @@ class checker:
                                 continue
                             return warning("[\\n]", current_token.content, self.current_line)
                         return warning("symbol", current_token.content, self.current_line)
-                    if current_token.terminal == "+":
-                        continue
-                    return warning("[to] or [+]", current_token.content, self.current_line)
+                    return warning("[to]", current_token.content, self.current_line)
                 return warning("string or symbol", current_token.content, self.current_line)
             
             if self.state == "multi_word_str":
-                if current_token.terminal == "close str":
+                if current_token.terminal == "close str" or current_token.terminal == '"' or current_token.terminal == "'":
                     current_token = self.stream.pop()
                     if current_token.terminal == "to":
                         current_token = self.stream.pop()
@@ -371,6 +383,7 @@ class checker:
                             if self.symbols.contains(current_token.content):
                                 return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                             self.symbols.append(current_token.content, "str")
+                            self.func_vars[self.current_func].append(current_token.content)
                             current_token = self.stream.pop()
                             if current_token.terminal == "\\n":
                                 self.current_line += 1
@@ -378,10 +391,7 @@ class checker:
                                 continue
                             return warning("[\\n]", current_token.content, self.current_line)
                         return warning("symbol", current_token.content, self.current_line)
-                    if current_token.terminal == "+":
-                        self.state = "assign_str"
-                        continue
-                    return warning("[to] or [+]", current_token.content, self.current_line)
+                    return warning("[to]", current_token.content, self.current_line)
                 if "'" in current_token.content or '"' in current_token.content:
                     return wrong_str(current_token.content, self.current_line)
                 continue
@@ -452,6 +462,7 @@ class checker:
                         if self.symbols.contains(current_token.content):
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "bool")
+                        self.func_vars[self.current_func].append(current_token.content)
                         current_token = self.stream.pop()
                         if current_token.content == '\\n':
                             self.state = "func_body"
@@ -471,6 +482,7 @@ class checker:
                         if self.symbols.contains(current_token.content):
                             return already_defined(current_token.content, self.symbols.get(current_token.content), self.current_line)
                         self.symbols.append(current_token.content, "bool")
+                        self.func_vars[self.current_func].append(current_token.content)
                         current_token = self.stream.pop()
                         if current_token.terminal == "\\n":
                             self.current_line += 1
@@ -609,9 +621,7 @@ class checker:
                                 continue
                             return warning("[\\n]", current_token.content, self.current_line)
                         return warning("symbol", current_token.content, self.current_line)
-                    if current_token.terminal == "+":
-                        continue
-                    return warning("[to] or [+]", current_token.content, self.current_line)
+                    return warning("[to]", current_token.content, self.current_line)
                 if current_token.terminal == "open str":
                     self.state = "multi_word_update"
                     continue
@@ -635,13 +645,11 @@ class checker:
                                 continue
                             return warning("[\\n]", current_token.content, self.current_line)
                         return warning("symbol", current_token.content, self.current_line)
-                    if current_token.terminal == "+":
-                        continue
-                    return warning("[to] or [+]", current_token.content, self.current_line)
+                    return warning("[to]", current_token.content, self.current_line)
                 return warning("string or symbol", current_token.content, self.current_line)
             
             if self.state == "multi_word_update":
-                if current_token.terminal == "close str":
+                if current_token.terminal == "close str" or current_token.terminal == '"' or current_token.terminal == "'":
                     current_token = self.stream.pop()
                     if current_token.terminal == "to":
                         current_token = self.stream.pop()
@@ -657,10 +665,7 @@ class checker:
                                 continue
                             return warning("[\\n]", current_token.content, self.current_line)
                         return warning("symbol", current_token.content, self.current_line)
-                    if current_token.terminal == "+":
-                        self.state = "update_str"
-                        continue
-                    return warning("[to] or [+]", current_token.content, self.current_line)
+                    return warning("[to]", current_token.content, self.current_line)
                 if "'" in current_token.content or '"' in current_token.content:
                     return wrong_str(current_token.content, self.current_line)
                 continue
@@ -800,7 +805,7 @@ class checker:
                 return warning("symbol or form or string or int or num or [true] or [false]", current_token.content, self.current_line)
             
             if self.state == "draw multi words":
-                if current_token.terminal == "close str":
+                if current_token.terminal == "close str" or current_token.terminal == '"' or current_token.terminal == "'":
                     self.state = "draw_coords"
                     continue
                 if "'" in current_token.content or '"' in current_token.content:
@@ -808,50 +813,10 @@ class checker:
                 continue
 
             if self.state == "draw_coords":
-                if current_token.terminal == "in":
-                    self.state = "coord_x"
+                if current_token.terminal == "\\n":
+                    self.state = "func_body"
                     continue
-                return warning("in", current_token.content, self.current_line)
-            
-            if self.state == "coord_x":
-                if current_token.terminal == "num":
-                    current_token = self.stream.pop()
-                    if current_token.terminal == ',':
-                        self.state = "coord_y"
-                        continue
-                    return warning(",", current_token.content, self.current_line)
-                if current_token.terminal == "symbol":
-                    if not self.symbols.contains(current_token.content):
-                        return not_defined(current_token.content, self.current_line)
-                    if not self.symbols.get(current_token.content):
-                        return wrong_type("int", self.symbols.get(current_token.content), self.current_line)
-                    current_token = self.stream.pop()
-                    if current_token.terminal == ",":
-                        self.state = "coord_y"
-                        continue
-                    return warning(",", current_token.content, self.current_line)
-                return warning("int", current_token.content, self.current_line)
-            
-            if self.state == "coord_y":
-                if current_token.terminal == "num":
-                    current_token = self.stream.pop()
-                    if current_token.terminal == '\\n':
-                        self.state = "func_body"
-                        self.current_line += 1
-                        continue
-                    return warning("\\n", current_token.content, self.current_line)
-                if current_token.terminal == "symbol":
-                    if not self.symbols.contains(current_token.content):
-                        return not_defined(current_token.content, self.current_line)
-                    if not self.symbols.get(current_token.content):
-                        return wrong_type("int", self.symbols.get(current_token.content), self.current_line)
-                    current_token = self.stream.pop()
-                    if current_token.terminal == "\\n":
-                        self.current_line += 1
-                        self.state = "func_body"
-                        continue
-                    return warning("\\n", current_token.content, self.current_line)
-                return warning("int", current_token.content, self.current_line)
+                return warning("\\n", current_token.content, self.current_line)
             
             if self.state == "set_color":
                 if current_token.terminal == "white" or current_token.terminal == "black":
@@ -940,7 +905,7 @@ class checker:
                 return warning("symbol or [nothing]", current_token.content, self.current_line)
             
             if self.state == "multi word param":
-                if current_token.terminal == "close str":
+                if current_token.terminal == "close str" or current_token.terminal == '"' or current_token.terminal == "'":
                     self.state = "end_call"
                     continue
                 if "'" in current_token.content or '"' in current_token.content:

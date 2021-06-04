@@ -1,3 +1,5 @@
+# This class saves the variables and functions names
+
 class symbol_table:
     symbols : dict = {}
 

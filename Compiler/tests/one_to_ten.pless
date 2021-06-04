@@ -1,0 +1,8 @@
+start main with nothing
+    assign int 0 to iter
+    while iter < 6
+        draw iter
+        draw "_"
+        update int iter + 1 to iter
+    end while
+end main

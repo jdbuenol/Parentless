@@ -1,14 +1,15 @@
-start fibonacci with int a
+start main with nothing
+    assign int 6 to a
     if a < 1
-        draw "error" in 0 , 0
+        draw "error"
     end if
     if ! a < 1
         if a = 1
-            draw 1 in 0 , 0
+            draw 1
         end if
         if ! a = 1
             if a = 2
-                draw 1 in 0 , 0
+                draw 1
             end if
             if ! a = 2
                 assign int 1 to b
@@ -28,12 +29,8 @@ start fibonacci with int a
                     end if
                     update int d - 1 to d
                 end while
-                draw e in 0 , 0
+                draw e
             end if
         end if
     end if
-end fibonacci
-
-start main with nothing
-    do fibonacci with 5
 end main

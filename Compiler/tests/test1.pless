@@ -1,5 +1,3 @@
 start main with nothing
-    if 5 + 2 > 1.3
-        draw "King crimson!" in 0 , 0
-    end if
+    draw true
 end main

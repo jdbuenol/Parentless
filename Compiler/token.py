@@ -1,5 +1,7 @@
 from terminals import terminals_array as keywords
 
+# Token to parser
+
 class token:
     content : str
     terminal : str

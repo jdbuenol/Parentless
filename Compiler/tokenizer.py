@@ -1,3 +1,5 @@
+# This class is the lexer
+
 from io import FileIO
 from token import token
 

@@ -1,0 +1,8 @@
+start add2numbers with int a , int b
+    assign int a + b to c
+    draw c
+end add2numbers
+
+start main with nothing
+    do add2numbers with 3 , 5
+end main
